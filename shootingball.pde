@@ -1,5 +1,5 @@
 //initialise score variable
-int score, score1, score2;
+int score, score1, score2, scoreteam;
 int ballSize = 20;
 int posXp1;
 int posXp2;
@@ -7,13 +7,21 @@ int gameStart = 0;
 int level;
 float ballspeed;
 int ballcount;
+int ballcountred;
 int teamlive;
+int bomp1, bomp2;
 int getRandomX()
 {
   return int(random(600));
 }
+
+//variable ball
 int ballx[] = new int[100];
 float bally[] = new float[100];
+int ballredx[] = new int[100];
+float ballredy[] = new float[100];
+int ballbomx[] = new int[2];
+float ballbomy[] = new float[2];
    
 void setup()
 {    
@@ -25,27 +33,40 @@ void setup()
    
 void draw()
 {
+  
+  //play game
   if (gameStart == 1){
     background (0);
     //player 1
     fill(255);
-    stroke (255);
-    triangle(posXp1-8, 680, posXp1+8, 680, posXp1, 765);
+    stroke (122);
+    triangle(posXp1-5, 680, posXp1+5, 680, posXp1, 670);
+    rect(posXp1-10,680,20,20);
+    rect(posXp1-20,690,40,10);  
     
     //player 2
     fill(122);
     stroke (255);
-    triangle(posXp2-8, 680, posXp2+8, 680, posXp2, 765);
-    
+    triangle(posXp2-5, 680, posXp2+5, 680, posXp2, 670);
+    rect(posXp2-10,680,20,20);
+    rect(posXp2-20,690,40,10);
+ 
     // display
     fill(255);
-    text("Player 1 : "+score1, 60,20);
+    text("Player 1 : "+score1, 80,20);
+    text("Bom : "+bomp1, 80,40);
     text("Player 2 : "+score2, width - 100,20);
+    text("bom : "+bomp2, width - 100,40);
     text("Level : "+level, width/2,20);
     text("TeamLive : "+(teamlive - 1), width/2,40);
-   
+    text("Score Team : "+scoreteam, width/2,60);
+    
+    //function
      ballFalling();
+     levelupdate();
+     livereduce();
      gameFinish();
+     
   } else if (gameStart == 0) {
     fill(color(255,0,0));
     fill(255, 0, 0);
@@ -57,9 +78,9 @@ void draw()
 
 void ballFalling()
 { 
+  //ball regular
   stroke(39, 154, 240);
   fill (39, 154, 240);
-   
   for (int i=0; i<ballcount; i++)
   {
     float y = bally[i];
@@ -71,37 +92,172 @@ void ballFalling()
       bally[i] = 0;
     }
   }
+  
+  //ball red
+  stroke(255, 0, 0);
+  fill (255, 0, 0);
+  for (int i=0; i<ballcountred; i++)
+  {
+    float y = ballredy[i];
+    int x = ballredx[i];
+    ellipse(x, y, ballSize, ballSize);
+    ballredy[i] = ballredy[i] + ballspeed;
+    if(ballredy[i]>=731)
+    {
+      ballredy[i] = -200;
+    }
+  }
+  
+  //ball bom
+  stroke(255, 255, 0);
+  fill (255, 255, 0);
+  for (int i=0; i<1; i++)
+  {
+    float y = ballbomy[i];
+    int x = ballbomx[i];
+    ellipse(x, y, ballSize, ballSize);
+    ballbomy[i] = ballbomy[i] + 1;
+    if(ballbomy[i]>=731)
+    {
+      ballbomy[i] = -800;
+    }
+  }
 }
-   
+
+//tembak   
 void cannon(int shotX, int player)
 {
   boolean strike = false;
+  
+  //ball regular
   for (int i = 0; i < ballcount; i++)
   {
     if((shotX >= (ballx[i]-ballSize/2)) && (shotX <= (ballx[i]+ballSize/2))) {
       strike = true;
-      line(shotX, 765, shotX, bally[i]);
-      ellipse(ballx[i], bally[i],
-              ballSize+25, ballSize+25);
+      
+      fill(255);
+      stroke (255);
+      line(shotX, 670, shotX, bally[i]);
+      
+      stroke(39, 154, 240);
+      fill (39, 154, 240);
+      ellipse(ballx[i], bally[i], ballSize+25, ballSize+25);
       ballx[i] = getRandomX();
       bally[i] = 0;
+      
       // update score
       score++;
+      scoreteam++;
       if (player == 2){
          score2++; 
       }
       if (player == 1){
          score1++; 
       }
-    }   
-  }
- 
-  if(strike == false)
-  {
-    line(shotX, 765, shotX, 0);
+    }
   }
   
-  if (score >= 10){
+  //ball red
+  for (int i = 0; i < ballcountred; i++)
+  {
+    if( ballredy[i] > 0 &&  (shotX >= (ballredx[i]-ballSize/2)) && (shotX <= (ballredx[i]+ballSize/2))) {
+      strike = true;
+      
+      fill(255);
+      stroke (255);
+      line(shotX, 670, shotX, ballredy[i]);
+      
+      stroke(255, 0, 0);
+      fill (255, 0, 0);
+      ellipse(ballredx[i], ballredy[i], ballSize+25, ballSize+25);
+      ballredx[i] = getRandomX();
+      ballredy[i] = -200;
+      // update live
+      teamlive = teamlive - 1;
+    }
+  }
+  
+  //ball bom
+  for (int i = 0; i < 1; i++)
+  { 
+    if( ballbomy[i] > 0 && (shotX >= (ballbomx[i]-ballSize/2)) && (shotX <= (ballbomx[i]+ballSize/2))) {
+      strike = true;
+      
+      fill(255);
+      stroke (255);
+      line(shotX, 670, shotX, ballbomy[i]);
+      
+      stroke(255, 255, 0);
+      fill (255, 255, 0);
+      ellipse(ballbomx[i], ballbomy[i], ballSize+25, ballSize+25);
+      ballbomx[i] = getRandomX();
+      ballbomy[i] = -800;
+      
+      // update bom
+      if (player == 2){
+         bomp2++; 
+      }
+      if (player == 1){
+         bomp1++; 
+      }
+    }
+    
+  }
+ 
+  // jika tembak gak kena
+  if(strike == false)
+  {
+    fill(255);
+    stroke (255);
+    line(shotX, 670, shotX, 0);
+  }
+}
+
+//bom
+void bom(int player)
+{
+  for (int i = 0; i < ballcount; i++)
+  {  
+    //bom ball 
+    stroke(39, 154, 240);
+    fill (39, 154, 240);
+    ellipse(ballx[i], bally[i], ballSize+25, ballSize+25);
+    ballx[i] = getRandomX();
+    bally[i] = 0;
+    // update score
+    score++;
+    scoreteam++;
+    if (player == 2){
+       score2++; 
+    }
+    if (player == 1){
+       score1++; 
+    }
+  }
+  
+  for (int i = 0; i < ballcountred; i++)
+  {
+      stroke(255, 0, 0);
+      fill (255, 0, 0);
+      ellipse(ballredx[i], ballredy[i], ballSize+25, ballSize+25);
+      ballredx[i] = getRandomX();
+      ballredy[i] = -200;
+  }
+  
+  for (int i = 0; i < 1; i++)
+  {
+    stroke(255, 255, 0);
+    fill (255, 255, 0);
+    ellipse(ballbomx[i], ballbomy[i], ballSize+25, ballSize+25);
+    ballbomx[i] = getRandomX();
+    ballbomy[i] = -800;
+  }
+}
+
+void levelupdate()
+{
+   if (score >= 10){
+     teamlive = teamlive + 1;
      level = level + 1;
      if (level % 4 == 0){
        ballx[ballcount] = getRandomX();
@@ -110,13 +266,16 @@ void cannon(int shotX, int player)
      } else {
         ballspeed = ballspeed + 0.3; 
      }
+     if (level % 3 == 0){
+       ballredx[ballcountred] = getRandomX();
+       ballredy[ballcountred] = 0;
+       ballcountred = ballcountred + 1;
+     }     
      score = 0;
-  }
- 
+  } 
 }
-   
-//GameOver
-void gameFinish()
+ 
+void livereduce()
 {
   for (int i=0; i<ballcount; i++)
   {
@@ -124,16 +283,21 @@ void gameFinish()
     {
       teamlive = teamlive - 1;
     }
-    if (teamlive <= 0) {
-        fill(color(255,0,0));
-        fill(255, 0, 0);
-        textAlign(CENTER);
-        text("GAME OVER", width/2, height/2);
-        text("Well done! Player 1 score was : "+ score1, width/2, height/2 + 50);
-        text("Well done! Player 2 score was : "+ score2, width/2, height/2 + 100);
-        text("Press Enter to Play Again", width/2, height/2 + 150);
-        gameStart = 2; 
-    }
+  } 
+}
+   
+//GameOver
+void gameFinish()
+{
+  if (teamlive <= 0) {
+      fill(color(255,0,0));
+      fill(255, 0, 0);
+      textAlign(CENTER);
+      text("GAME OVER", width/2, height/2);
+      text("Well done! Player 1 score was : "+ score1, width/2, height/2 + 50);
+      text("Well done! Player 2 score was : "+ score2, width/2, height/2 + 100);
+      text("Press Enter to Play Again", width/2, height/2 + 150);
+      gameStart = 2; 
   }
 }
 
@@ -154,14 +318,14 @@ void keyPressed()
        bally[2] = -40;
        bally[3] = -60;
        bally[4] = -80;
-       gameStart = 1;
+       ballbomx[0] = getRandomX();
+       ballbomy[0] = -800;
        posXp1 = 200;
        posXp2 = 400;
+       ballcount = teamlive = 5;
+       gameStart = level = bomp1 = bomp2 = 1;
        ballspeed = 1;
-       ballcount = 5;
-       level = 1;
-       score = score1 = score2 = 0;
-       teamlive = 5;
+       score = score1 = score2 = scoreteam = ballcountred = 0;
     }
   }  
   
@@ -169,6 +333,14 @@ void keyPressed()
     //player 1
     if (keyCode == 87) {
       cannon(posXp1, 1);
+    }
+    
+    //player 2
+    if (keyCode == 83) {
+       if (bomp1 > 0){
+          bom(1);
+          bomp1--;
+       }
     }
     
     if (keyCode == 68) {
@@ -186,6 +358,14 @@ void keyPressed()
     //player 2
     if (keyCode == UP) {
        cannon(posXp2, 2);    
+    }
+    
+    //player 2
+    if (keyCode == DOWN) {
+       if (bomp2 > 0){
+          bom(2);
+          bomp2--;
+       }
     }
     
     if (keyCode == RIGHT) {
