@@ -1,3 +1,8 @@
+import ddf.minim.*;
+
+Minim minim;
+AudioPlayer title, playgame, gameover, tembak, bomb;
+
 //initialise score variable
 int score, score1, score2, scoreteam;
 int ballSize = 20;
@@ -28,7 +33,11 @@ void setup()
   //Size
   size (600, 700);
   textSize(20);
-  smooth ();  
+  smooth ();
+  minim = new Minim(this);
+  title = minim.loadFile("title.mp3");  
+  tembak = minim.loadFile("initial.mp3");
+  bomb = minim.loadFile("initial.mp3");
 }
    
 void draw()
@@ -73,6 +82,7 @@ void draw()
     textAlign(CENTER);
     text("Shooting Ball Multiplayer", width/2, height/2);
     text("Press Enter to Play", width/2, height/2 + 150);
+    title.play();
   }
 }
 
@@ -211,6 +221,12 @@ void cannon(int shotX, int player)
     stroke (255);
     line(shotX, 670, shotX, 0);
   }
+  
+  
+    tembak.close();
+    minim = new Minim(this);
+    tembak = minim.loadFile("tembak.mp3");
+    tembak.play();
 }
 
 //bom
@@ -223,7 +239,7 @@ void bom(int player)
     fill (39, 154, 240);
     ellipse(ballx[i], bally[i], ballSize+25, ballSize+25);
     ballx[i] = getRandomX();
-    bally[i] = 0;
+    bally[i] = -100;
     // update score
     score++;
     scoreteam++;
@@ -241,7 +257,7 @@ void bom(int player)
       fill (255, 0, 0);
       ellipse(ballredx[i], ballredy[i], ballSize+25, ballSize+25);
       ballredx[i] = getRandomX();
-      ballredy[i] = -200;
+      ballredy[i] = -300;
   }
   
   for (int i = 0; i < 1; i++)
@@ -250,8 +266,19 @@ void bom(int player)
     fill (255, 255, 0);
     ellipse(ballbomx[i], ballbomy[i], ballSize+25, ballSize+25);
     ballbomx[i] = getRandomX();
-    ballbomy[i] = -800;
+    ballbomy[i] = -900;
   }
+  
+  playgame.shiftGain(-40.0, 0.0, 2000);
+  playgame.setGain(-10.0);
+  playgame.mute();
+  playgame.unmute();
+
+  bomb.close();
+  minim = new Minim(this);
+  bomb = minim.loadFile("bomb.mp3");
+  bomb.play();
+  
 }
 
 void levelupdate()
@@ -297,7 +324,11 @@ void gameFinish()
       text("Well done! Player 1 score was : "+ score1, width/2, height/2 + 50);
       text("Well done! Player 2 score was : "+ score2, width/2, height/2 + 100);
       text("Press Enter to Play Again", width/2, height/2 + 150);
-      gameStart = 2; 
+      gameStart = 2;
+      playgame.close();
+      minim = new Minim(this);
+      gameover = minim.loadFile("gameover.mp3");
+      gameover.loop();    
   }
 }
 
@@ -308,6 +339,11 @@ void keyPressed()
 
   if (keyCode == ENTER) {
     if(gameStart == 0 || gameStart == 2) {
+       if(gameStart == 0){
+         title.close(); 
+       } else if (gameStart == 2){
+         gameover.close(); 
+       }
        ballx[0] = getRandomX();
        ballx[1] = getRandomX();
        ballx[2] = getRandomX();
@@ -326,6 +362,10 @@ void keyPressed()
        gameStart = level = bomp1 = bomp2 = 1;
        ballspeed = 1;
        score = score1 = score2 = scoreteam = ballcountred = 0;
+       minim = new Minim(this);
+//       minim.setVolume(0.5);
+       playgame = minim.loadFile("playgame.mp3");
+       playgame.loop();       
     }
   }  
   
