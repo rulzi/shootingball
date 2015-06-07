@@ -1,20 +1,26 @@
 import ddf.minim.*;
-
 Minim minim;
 AudioPlayer title, playgame, gameover, tembak, bomb;
 
+import procontroll.*;
+import java.io.*;
+
+ControllIO controll;
+ControllDevice device;
+ControllStick stick;
+ControllButton buttona, buttonb, buttonstart;
+
 //initialise score variable
-int score, score1, score2, scoreteam;
+int score, scoreplayer;
 int ballSize = 20;
-int posXp1;
-int posXp2;
+float posX;
 int gameStart = 0;
 int level;
 float ballspeed;
 int ballcount;
 int ballcountred;
-int teamlive;
-int bomp1, bomp2;
+int live;
+int bom;
 int getRandomX()
 {
   return int(random(600));
@@ -34,56 +40,63 @@ void setup()
   size (600, 700);
   textSize(20);
   smooth ();
+
   minim = new Minim(this);
   title = minim.loadFile("title.mp3");  
   tembak = minim.loadFile("initial.mp3");
   bomb = minim.loadFile("initial.mp3");
+  
+  controll = ControllIO.getInstance(this);
+  device = controll.getDevice("Twin USB Gamepad      ");
+  device.printSticks();
+  
+  stick = device.getStick(0);
+  stick.setTolerance(0.05f);
+    
+  buttona = device.getButton(2);
+  buttonb = device.getButton(1);
+  buttonstart = device.getButton(9);
 }
    
 void draw()
 {
-  
+     
   //play game
   if (gameStart == 1){
     background (0);
     //player 1
     fill(255);
     stroke (122);
-    triangle(posXp1-5, 680, posXp1+5, 680, posXp1, 670);
-    rect(posXp1-10,680,20,20);
-    rect(posXp1-20,690,40,10);  
-    
-    //player 2
-    fill(122);
-    stroke (255);
-    triangle(posXp2-5, 680, posXp2+5, 680, posXp2, 670);
-    rect(posXp2-10,680,20,20);
-    rect(posXp2-20,690,40,10);
+    triangle(posX-5, 680, posX+5, 680, posX, 670);
+    rect(posX-10,680,20,20);
+    rect(posX-20,690,40,10);  
  
     // display
     fill(255);
-    text("Player 1 : "+score1, 80,20);
-    text("Bom : "+bomp1, 80,40);
-    text("Player 2 : "+score2, width - 100,20);
-    text("bom : "+bomp2, width - 100,40);
+    text("Score : "+scoreplayer, 80,20);
+    text("Bom : "+bom, 80,40);
     text("Level : "+level, width/2,20);
-    text("TeamLive : "+(teamlive - 1), width/2,40);
-    text("Score Team : "+scoreteam, width/2,60);
+    text("Live : "+(live - 1), width/2,40);
     
     //function
+     joystick();
      ballFalling();
      levelupdate();
      livereduce();
      gameFinish();
      
   } else if (gameStart == 0) {
+    joystick();
     fill(color(255,0,0));
     fill(255, 0, 0);
     textAlign(CENTER);
     text("Shooting Ball Multiplayer", width/2, height/2);
     text("Press Enter to Play", width/2, height/2 + 150);
     title.play();
+  } else {
+    joystick();  
   }
+  
 }
 
 void ballFalling()
@@ -135,7 +148,7 @@ void ballFalling()
 }
 
 //tembak   
-void cannon(int shotX, int player)
+void cannon(float shotX)
 {
   boolean strike = false;
   
@@ -157,13 +170,7 @@ void cannon(int shotX, int player)
       
       // update score
       score++;
-      scoreteam++;
-      if (player == 2){
-         score2++; 
-      }
-      if (player == 1){
-         score1++; 
-      }
+      scoreplayer++;
     }
   }
   
@@ -183,7 +190,7 @@ void cannon(int shotX, int player)
       ballredx[i] = getRandomX();
       ballredy[i] = -200;
       // update live
-      teamlive = teamlive - 1;
+      live = live - 1;
     }
   }
   
@@ -204,12 +211,7 @@ void cannon(int shotX, int player)
       ballbomy[i] = -800;
       
       // update bom
-      if (player == 2){
-         bomp2++; 
-      }
-      if (player == 1){
-         bomp1++; 
-      }
+      bom++;
     }
     
   }
@@ -230,7 +232,7 @@ void cannon(int shotX, int player)
 }
 
 //bom
-void bom(int player)
+void bom()
 {
   for (int i = 0; i < ballcount; i++)
   {  
@@ -242,13 +244,7 @@ void bom(int player)
     bally[i] = -100;
     // update score
     score++;
-    scoreteam++;
-    if (player == 2){
-       score2++; 
-    }
-    if (player == 1){
-       score1++; 
-    }
+    scoreplayer++;
   }
   
   for (int i = 0; i < ballcountred; i++)
@@ -284,7 +280,7 @@ void bom(int player)
 void levelupdate()
 {
    if (score >= 10){
-     teamlive = teamlive + 1;
+     live = live + 1;
      level = level + 1;
      if (level % 4 == 0){
        ballx[ballcount] = getRandomX();
@@ -308,7 +304,7 @@ void livereduce()
   {
     if(bally[i]>=730)
     {
-      teamlive = teamlive - 1;
+      live = live - 1;
     }
   } 
 }
@@ -316,13 +312,12 @@ void livereduce()
 //GameOver
 void gameFinish()
 {
-  if (teamlive <= 0) {
+  if (live <= 0) {
       fill(color(255,0,0));
       fill(255, 0, 0);
       textAlign(CENTER);
       text("GAME OVER", width/2, height/2);
-      text("Well done! Player 1 score was : "+ score1, width/2, height/2 + 50);
-      text("Well done! Player 2 score was : "+ score2, width/2, height/2 + 100);
+      text("Well done! Player score was : "+ scoreplayer, width/2, height/2 + 50);
       text("Press Enter to Play Again", width/2, height/2 + 150);
       gameStart = 2;
       playgame.close();
@@ -356,68 +351,94 @@ void keyPressed()
        bally[4] = -80;
        ballbomx[0] = getRandomX();
        ballbomy[0] = -800;
-       posXp1 = 200;
-       posXp2 = 400;
-       ballcount = teamlive = 5;
-       gameStart = level = bomp1 = bomp2 = 1;
+       posX = 300;
+       ballcount = live = 5;
+       gameStart = level = bom = 1;
        ballspeed = 1;
        score = score1 = score2 = scoreteam = ballcountred = 0;
        minim = new Minim(this);
 //       minim.setVolume(0.5);
        playgame = minim.loadFile("playgame.mp3");
-       playgame.loop();       
+       playgame.loop();
+       score = scoreplayer = ballcountred = 0;
     }
   }  
   
   if (gameStart == 1) {
-    //player 1
-    if (keyCode == 87) {
-      cannon(posXp1, 1);
-    }
-    
-    //player 2
-    if (keyCode == 83) {
-       if (bomp1 > 0){
-          bom(1);
-          bomp1--;
-       }
-    }
-    
-    if (keyCode == 68) {
-      if(posXp1 < width){
-        posXp1 = posXp1 + 12;
-      }
-    }
-    
-    if (keyCode == 65) {
-      if(posXp1 > 0){
-        posXp1 = posXp1 - 12;
-      }
-    }
     
     //player 2
     if (keyCode == UP) {
-       cannon(posXp2, 2);    
+       cannon(posX);    
     }
     
-    //player 2
     if (keyCode == DOWN) {
-       if (bomp2 > 0){
-          bom(2);
-          bomp2--;
+       if (bom > 0){
+          bom();
+          bom--;
        }
     }
     
     if (keyCode == RIGHT) {
-      if(posXp2 < width){
-        posXp2 = posXp2 + 12;
+      if(posX < width){
+        posX = posX + 12;
       }
     }
     
     if (keyCode == LEFT) {
-      if(posXp2 > 0){
-         posXp2 = posXp2 - 12; 
+      if(posX > 0){
+         posX = posX - 12; 
       }
     }
   }
+}
+
+void joystick(){
+  if(gameStart == 1) {
+    if(buttona.pressed()){
+        cannon(posX);  
+    }
+    if(buttonb.pressed()){
+        if (bom > 0){
+            bom();
+            bom--;
+         }
+      }
+    }
+  
+  if (buttonstart.pressed()) {
+    if(gameStart == 0 || gameStart == 2) {
+       if(gameStart == 0){
+         title.close(); 
+       } else if (gameStart == 2){
+         gameover.close(); 
+       }
+       ballx[0] = getRandomX();
+       ballx[1] = getRandomX();
+       ballx[2] = getRandomX();
+       ballx[3] = getRandomX();
+       ballx[4] = getRandomX();
+       bally[0] = 0;
+       bally[1] = -20;
+       bally[2] = -40;
+       bally[3] = -60;
+       bally[4] = -80;
+       ballbomx[0] = getRandomX();
+       ballbomy[0] = -800;
+       posX = 300;
+       ballcount = live = 5;
+       gameStart = level = bom = 1;
+       ballspeed = 1;
+       score = score1 = score2 = scoreteam = ballcountred = 0;
+       minim = new Minim(this);
+//       minim.setVolume(0.5);
+       playgame = minim.loadFile("playgame.mp3");
+       playgame.loop();
+       score = scoreplayer = ballcountred = 0;
+    }
+  }
+  
+    stick.setMultiplier(4);
+  
+    posX = posX + stick.getY();
+  
 }
