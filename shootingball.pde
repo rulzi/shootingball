@@ -355,7 +355,7 @@ void keyPressed()
        ballcount = live = 5;
        gameStart = level = bom = 1;
        ballspeed = 1;
-       score = score1 = score2 = scoreteam = ballcountred = 0;
+       score = scoreplayer = ballcountred = 0;
        minim = new Minim(this);
 //       minim.setVolume(0.5);
        playgame = minim.loadFile("playgame.mp3");
@@ -428,7 +428,7 @@ void joystick(){
        ballcount = live = 5;
        gameStart = level = bom = 1;
        ballspeed = 1;
-       score = score1 = score2 = scoreteam = ballcountred = 0;
+       score = scoreplayer = ballcountred = 0;
        minim = new Minim(this);
 //       minim.setVolume(0.5);
        playgame = minim.loadFile("playgame.mp3");
