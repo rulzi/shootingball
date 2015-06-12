@@ -8,13 +8,14 @@ import java.io.*;
 ControllIO controll;
 ControllDevice device;
 ControllStick stick;
-ControllButton buttona, buttonb, buttonstart;
+ControllButton buttona, buttonb, buttonstart, buttonpause, buttonunpause;
 
 //initialise score variable
 int score, scoreplayer;
 int ballSize = 20;
 float posX;
 int gameStart = 0;
+boolean pause = false;
 int level;
 float ballspeed;
 int ballcount;
@@ -48,7 +49,6 @@ void setup()
   
   controll = ControllIO.getInstance(this);
   device = controll.getDevice("Twin USB Gamepad      ");
-  device.printSticks();
   
   stick = device.getStick(0);
   stick.setTolerance(0.05f);
@@ -56,6 +56,8 @@ void setup()
   buttona = device.getButton(2);
   buttonb = device.getButton(1);
   buttonstart = device.getButton(9);
+  buttonpause = device.getButton(5);
+  buttonunpause = device.getButton(4);
 }
    
 void draw()
@@ -63,27 +65,35 @@ void draw()
      
   //play game
   if (gameStart == 1){
-    background (0);
-    //player 1
-    fill(255);
-    stroke (122);
-    triangle(posX-5, 680, posX+5, 680, posX, 670);
-    rect(posX-10,680,20,20);
-    rect(posX-20,690,40,10);  
- 
-    // display
-    fill(255);
-    text("Score : "+scoreplayer, 80,20);
-    text("Bom : "+bom, 80,40);
-    text("Level : "+level, width/2,20);
-    text("Live : "+(live - 1), width/2,40);
-    
-    //function
-     joystick();
-     ballFalling();
-     levelupdate();
-     livereduce();
-     gameFinish();
+    if (pause){
+      joystick();
+      fill(color(255,0,0));
+      fill(255, 0, 0);
+      textAlign(CENTER);
+      text("PAUSE", width/2, height/2);
+    } else {
+      background (0);
+      //player 1
+      fill(255);
+      stroke (122);
+      triangle(posX-5, 680, posX+5, 680, posX, 670);
+      rect(posX-10,680,20,20);
+      rect(posX-20,690,40,10);  
+   
+      // display
+      fill(255);
+      text("Score : "+scoreplayer, 80,20);
+      text("Bom : "+bom, 80,40);
+      text("Level : "+level, width/2,20);
+      text("Live : "+(live - 1), width/2,40);
+      
+      //function
+       joystick();
+       ballFalling();
+       levelupdate();
+       livereduce();
+       gameFinish();
+    }
      
   } else if (gameStart == 0) {
     joystick();
@@ -361,12 +371,21 @@ void keyPressed()
        playgame = minim.loadFile("playgame.mp3");
        playgame.loop();
        score = scoreplayer = ballcountred = 0;
+       pause = false;
+    }  else if (gameStart == 1){
+      if (pause){ 
+        pause = false;
+        playgame.play();
+      } else {
+         pause = true;
+         playgame.pause();
+      }
     }
+    
   }  
   
-  if (gameStart == 1) {
+  if (gameStart == 1 && pause == false) {
     
-    //player 2
     if (keyCode == UP) {
        cannon(posX);    
     }
@@ -393,7 +412,7 @@ void keyPressed()
 }
 
 void joystick(){
-  if(gameStart == 1) {
+  if(gameStart == 1 && pause == false) {
     if(buttona.pressed()){
         cannon(posX);  
     }
@@ -403,6 +422,11 @@ void joystick(){
             bom--;
          }
       }
+      
+    stick.setMultiplier(4);
+  
+    posX = posX + stick.getY();
+      
     }
   
   if (buttonstart.pressed()) {
@@ -434,11 +458,19 @@ void joystick(){
        playgame = minim.loadFile("playgame.mp3");
        playgame.loop();
        score = scoreplayer = ballcountred = 0;
+       pause = false;
     }
   }
   
-    stick.setMultiplier(4);
-  
-    posX = posX + stick.getY();
+   if (gameStart == 1){
+     if (buttonunpause.pressed()) {
+        pause = false;
+        playgame.play();
+      }
+     if (buttonpause.pressed()) {
+         pause = true;
+         playgame.pause();
+      }
+    }
   
 }
