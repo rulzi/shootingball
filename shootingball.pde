@@ -8,7 +8,7 @@ import java.io.*;
 ControllIO controll;
 ControllDevice device;
 ControllStick stick;
-ControllButton buttona, buttonb, buttonstart, buttonpause, buttonunpause;
+ControllButton buttona, buttonb, buttonstart;
 
 //initialise score variable
 int score, scoreplayer;
@@ -22,9 +22,14 @@ int ballcount;
 int ballcountred;
 int live;
 int bom;
+int sequence_bom, sequence_pause;
 int getRandomX()
 {
   return int(random(600));
+}
+int getRandomY()
+{
+  return int(random(-400));
 }
 
 //variable ball
@@ -56,8 +61,6 @@ void setup()
   buttona = device.getButton(2);
   buttonb = device.getButton(1);
   buttonstart = device.getButton(9);
-  buttonpause = device.getButton(5);
-  buttonunpause = device.getButton(4);
 }
    
 void draw()
@@ -107,6 +110,8 @@ void draw()
     joystick();  
   }
   
+  sequence();
+  
 }
 
 void ballFalling()
@@ -122,7 +127,7 @@ void ballFalling()
     bally[i] = bally[i] + ballspeed;
     if(bally[i]>=731)
     {
-      bally[i] = 0;
+      bally[i] = getRandomY();
     }
   }
   
@@ -137,7 +142,7 @@ void ballFalling()
     ballredy[i] = ballredy[i] + ballspeed;
     if(ballredy[i]>=731)
     {
-      ballredy[i] = -200;
+      ballredy[i] = getRandomY()-200;
     }
   }
   
@@ -165,7 +170,7 @@ void cannon(float shotX)
   //ball regular
   for (int i = 0; i < ballcount; i++)
   {
-    if((shotX >= (ballx[i]-ballSize/2)) && (shotX <= (ballx[i]+ballSize/2))) {
+    if(bally[i] > 0 &&  (shotX >= (ballx[i]-ballSize/2)) && (shotX <= (ballx[i]+ballSize/2))) {
       strike = true;
       
       fill(255);
@@ -176,7 +181,7 @@ void cannon(float shotX)
       fill (39, 154, 240);
       ellipse(ballx[i], bally[i], ballSize+25, ballSize+25);
       ballx[i] = getRandomX();
-      bally[i] = 0;
+      bally[i] = getRandomY();
       
       // update score
       score++;
@@ -198,7 +203,7 @@ void cannon(float shotX)
       fill (255, 0, 0);
       ellipse(ballredx[i], ballredy[i], ballSize+25, ballSize+25);
       ballredx[i] = getRandomX();
-      ballredy[i] = -200;
+      ballredy[i] = getRandomY()-200;
       // update live
       live = live - 1;
     }
@@ -251,7 +256,7 @@ void bom()
     fill (39, 154, 240);
     ellipse(ballx[i], bally[i], ballSize+25, ballSize+25);
     ballx[i] = getRandomX();
-    bally[i] = -100;
+    bally[i] = getRandomY()-100;
     // update score
     score++;
     scoreplayer++;
@@ -263,7 +268,7 @@ void bom()
       fill (255, 0, 0);
       ellipse(ballredx[i], ballredy[i], ballSize+25, ballSize+25);
       ballredx[i] = getRandomX();
-      ballredy[i] = -300;
+      ballredy[i] = getRandomY()-300;
   }
   
   for (int i = 0; i < 1; i++)
@@ -272,7 +277,7 @@ void bom()
     fill (255, 255, 0);
     ellipse(ballbomx[i], ballbomy[i], ballSize+25, ballSize+25);
     ballbomx[i] = getRandomX();
-    ballbomy[i] = -900;
+    ballbomy[i] = getRandomY()-900;
   }
   
   playgame.shiftGain(-40.0, 0.0, 2000);
@@ -294,14 +299,14 @@ void levelupdate()
      level = level + 1;
      if (level % 4 == 0){
        ballx[ballcount] = getRandomX();
-       bally[ballcount] = 0;
+       bally[ballcount] = getRandomY();
        ballcount = ballcount + 1;
      } else {
         ballspeed = ballspeed + 0.3; 
      }
      if (level % 3 == 0){
        ballredx[ballcountred] = getRandomX();
-       ballredy[ballcountred] = 0;
+       ballredy[ballcountred] = getRandomY();
        ballcountred = ballcountred + 1;
      }     
      score = 0;
@@ -337,6 +342,12 @@ void gameFinish()
   }
 }
 
+//sequence
+void sequence(){
+   sequence_bom++;
+   sequence_pause++; 
+}
+
 //Play the game
 
 void keyPressed()
@@ -344,34 +355,7 @@ void keyPressed()
 
   if (keyCode == ENTER) {
     if(gameStart == 0 || gameStart == 2) {
-       if(gameStart == 0){
-         title.close(); 
-       } else if (gameStart == 2){
-         gameover.close(); 
-       }
-       ballx[0] = getRandomX();
-       ballx[1] = getRandomX();
-       ballx[2] = getRandomX();
-       ballx[3] = getRandomX();
-       ballx[4] = getRandomX();
-       bally[0] = 0;
-       bally[1] = -20;
-       bally[2] = -40;
-       bally[3] = -60;
-       bally[4] = -80;
-       ballbomx[0] = getRandomX();
-       ballbomy[0] = -800;
-       posX = 300;
-       ballcount = live = 5;
-       gameStart = level = bom = 1;
-       ballspeed = 1;
-       score = scoreplayer = ballcountred = 0;
-       minim = new Minim(this);
-//       minim.setVolume(0.5);
-       playgame = minim.loadFile("playgame.mp3");
-       playgame.loop();
-       score = scoreplayer = ballcountred = 0;
-       pause = false;
+       startgame();
     }  else if (gameStart == 1){
       if (pause){ 
         pause = false;
@@ -417,10 +401,13 @@ void joystick(){
         cannon(posX);  
     }
     if(buttonb.pressed()){
-        if (bom > 0){
-            bom();
-            bom--;
-         }
+        if (sequence_bom >= 10){
+          if (bom > 0){
+              bom();
+              bom--;
+           }
+           sequence_bom = 0;
+        }
       }
       
     stick.setMultiplier(4);
@@ -431,46 +418,50 @@ void joystick(){
   
   if (buttonstart.pressed()) {
     if(gameStart == 0 || gameStart == 2) {
-       if(gameStart == 0){
-         title.close(); 
-       } else if (gameStart == 2){
-         gameover.close(); 
-       }
-       ballx[0] = getRandomX();
-       ballx[1] = getRandomX();
-       ballx[2] = getRandomX();
-       ballx[3] = getRandomX();
-       ballx[4] = getRandomX();
-       bally[0] = 0;
-       bally[1] = -20;
-       bally[2] = -40;
-       bally[3] = -60;
-       bally[4] = -80;
-       ballbomx[0] = getRandomX();
-       ballbomy[0] = -800;
-       posX = 300;
-       ballcount = live = 5;
-       gameStart = level = bom = 1;
-       ballspeed = 1;
-       score = scoreplayer = ballcountred = 0;
-       minim = new Minim(this);
+        startgame();
+    }  else if (gameStart == 1){
+      if(sequence_pause >= 10){
+        if (pause){ 
+          pause = false;
+          playgame.play();
+        } else {
+           pause = true;
+           playgame.pause();
+        }
+        sequence_pause = 0;
+      }
+    }
+  }  
+}
+
+void startgame(){
+   if(gameStart == 0){
+       title.close(); 
+     } else if (gameStart == 2){
+       gameover.close(); 
+     }
+     ballx[0] = getRandomX();
+     ballx[1] = getRandomX();
+     ballx[2] = getRandomX();
+     ballx[3] = getRandomX();
+     ballx[4] = getRandomX();
+     bally[0] = getRandomY();
+     bally[1] = getRandomY();
+     bally[2] = getRandomY();
+     bally[3] = getRandomY();
+     bally[4] = getRandomY();
+     ballbomx[0] = getRandomX();
+     ballbomy[0] = -800;
+     posX = 300;
+     ballcount = live = 5;
+     gameStart = level = bom = 1;
+     ballspeed = 1;
+     score = scoreplayer = ballcountred = 0;
+     minim = new Minim(this);
 //       minim.setVolume(0.5);
-       playgame = minim.loadFile("playgame.mp3");
-       playgame.loop();
-       score = scoreplayer = ballcountred = 0;
-       pause = false;
-    }
-  }
-  
-   if (gameStart == 1){
-     if (buttonunpause.pressed()) {
-        pause = false;
-        playgame.play();
-      }
-     if (buttonpause.pressed()) {
-         pause = true;
-         playgame.pause();
-      }
-    }
-  
+     playgame = minim.loadFile("playgame.mp3");
+     playgame.loop();
+     score = scoreplayer = ballcountred = 0;
+     pause = false;
+     sequence_pause = 0;
 }
