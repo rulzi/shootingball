@@ -296,7 +296,7 @@ void bom()
 
 void levelupdate()
 {
-   if (score >= 10){
+   if (score >= (5 + (10 * ((level - 1) * 0.3 )) )){
      live = live + 1;
      level = level + 1;
      if (level % 4 == 0){
