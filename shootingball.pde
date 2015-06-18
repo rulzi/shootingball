@@ -11,7 +11,7 @@ ControllStick stick;
 ControllButton buttona, buttonb, buttonstart;
 
 //initialise score variable
-int score, scoreplayer;
+int score, scoreplayer, highscore;
 int ballSize = 20;
 float posX;
 int gameStart = 0;
@@ -206,6 +206,8 @@ void cannon(float shotX)
       ballredy[i] = getRandomY()-200;
       // update live
       live = live - 1;
+      // update score
+      scoreplayer = scoreplayer - 5;
     }
   }
   
@@ -310,7 +312,7 @@ void levelupdate()
        ballcountred = ballcountred + 1;
      }     
      score = 0;
-  } 
+  }
 }
  
 void livereduce()
@@ -328,16 +330,38 @@ void livereduce()
 void gameFinish()
 {
   if (live <= 0) {
+      if(highscore < scoreplayer){
+         highscore =  scoreplayer;
+      }
       fill(color(255,0,0));
       fill(255, 0, 0);
       textAlign(CENTER);
       text("GAME OVER", width/2, height/2);
       text("Well done! Player score was : "+ scoreplayer, width/2, height/2 + 50);
+      text("High score player : "+ highscore, width/2, height/2 + 100);
       text("Press Enter to Play Again", width/2, height/2 + 150);
       gameStart = 2;
       playgame.close();
       minim = new Minim(this);
       gameover = minim.loadFile("gameover.mp3");
+      gameover.loop();    
+  }
+  
+  if (level > 15) {
+      if(highscore < scoreplayer){
+         highscore =  scoreplayer;
+      }
+      fill(color(255,0,0));
+      fill(255, 0, 0);
+      textAlign(CENTER);
+      text("GAME COMPLETE", width/2, height/2);
+      text("Well done! Player score was : "+ scoreplayer, width/2, height/2 + 50);
+      text("High score player : "+ highscore, width/2, height/2 + 100);
+      text("Press Enter to Play Again", width/2, height/2 + 150);
+      gameStart = 2;
+      playgame.close();
+      minim = new Minim(this);
+      gameover = minim.loadFile("gamefinish.mp3");
       gameover.loop();    
   }
 }
